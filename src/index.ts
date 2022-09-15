@@ -1,5 +1,8 @@
 require("dotenv").config();
-import { sendLetterOfExplanationSignatureRequest } from "./hellosign";
+import {
+  sendLetterOfExplanationSignatureRequest,
+  sendPurchaseContractAddendumRequest,
+} from "./hellosign";
 
 const hellosignTestLOX = async () => {
   const result = await sendLetterOfExplanationSignatureRequest(
@@ -20,8 +23,37 @@ const hellosignTestLOX = async () => {
   );
 };
 
+const helloSignTestPurchaseAddenda = async () => {
+  const result = await sendPurchaseContractAddendumRequest(
+    ["Add credits of $6,000", "Remove the couch from the purchase contract"],
+    {
+      streetAddress: "211 E Ohio St",
+      address2: "Apt 510",
+      city: "Chicago",
+      state: "IL",
+      zipCode: "60611",
+    },
+    [
+      {
+        firstName: "Dylan",
+        lastName: "Hall",
+        email: "dylhallan@gmail.com",
+      },
+    ],
+    "2022-09-15",
+    [
+      {
+        firstName: "Neon",
+        lastName: "Hall",
+        email: "dylhallan@gmail.com",
+      },
+    ]
+  );
+};
+
 const hellosignTest = async () => {
-  // hellosignTestLOX();
+  // await hellosignTestLOX();
+  await helloSignTestPurchaseAddenda();
 };
 
 hellosignTest();
