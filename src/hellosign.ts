@@ -79,52 +79,91 @@ export const sendLetterOfExplanationSignatureRequest = async (
   }
 };
 
-function parseDate(dateStr: string) {
-  const components = dateStr.split("-");
+export const sendPurchaseContractAddendumRequest = async (
+  addenda: string[],
+  address: Address,
+  buyers: Signer[],
+  contractDate: string,
+  sellers: Signer[]
+) => {
+  const signers: HelloSignSDK.SubSignatureRequestTemplateSigner[] = [];
 
-  let returnDay,
-    returnMonth,
-    returnYear = "";
-
-  if (components.length === 3) {
-    returnYear = components[0].slice(-2);
-    returnDay = `${parseInt(components[2])}`;
-
-    const month = parseInt(components[1]);
-
-    if (month === 1) {
-      returnMonth = "January";
-    } else if (month === 2) {
-      returnMonth = "February";
-    } else if (month === 3) {
-      returnMonth = "March";
-    } else if (month === 4) {
-      returnMonth = "April";
-    } else if (month === 5) {
-      returnMonth = "May";
-    } else if (month === 6) {
-      returnMonth = "June";
-    } else if (month === 7) {
-      returnMonth = "July";
-    } else if (month === 8) {
-      returnMonth = "August";
-    } else if (month === 9) {
-      returnMonth = "September";
-    } else if (month === 10) {
-      returnMonth = "October";
-    } else if (month === 11) {
-      returnMonth = "November";
-    } else if (month === 12) {
-      returnMonth = "December";
-    }
+  for (let b = 0; b < buyers.length; b++) {
+    const buyer = buyers[b];
+    signers.push({
+      role: `Buyer${b + 1}`,
+      emailAddress: buyer.email,
+      name: `${buyer.firstName} ${buyer.lastName}`,
+    });
   }
 
-  if (returnDay === "") {
-    return { monthDay: "", year2digit: "" };
-  } else {
-    return { monthDay: `${returnMonth} ${returnDay}`, year2digit: returnYear };
+  for (let s = 0; s < sellers.length; s++) {
+    const seller = sellers[s];
+    signers.push({
+      role: `Seller${s + 1}`,
+      emailAddress: seller.email,
+      name: `${seller.firstName} ${seller.lastName}`,
+    });
   }
-}
+
+  const customFieldContractDate: HelloSignSDK.SubCustomField = {
+    editor: "Sender",
+    name: "ContractDate",
+    value: contractDate,
+    required: true,
+  };
+
+  const customFieldPropertyAddress: HelloSignSDK.SubCustomField = {
+    editor: "Sender",
+    name: "PropertyAddress",
+    value: `${address.streetAddress}${
+      address.address2 ? " " + address.address2 : ""
+    }, ${address.city}, ${address.state} ${address.zipCode}`,
+    required: true,
+  };
+
+  let addendaStr = `\n1. ${addenda[0]}`;
+  for (let a = 1; a < addenda.length; a++) {
+    addendaStr = `${addendaStr}\n\n${a + 1}. ${addenda[a]}`;
+  }
+
+  const customFieldAddenda: HelloSignSDK.SubCustomField = {
+    editor: "Sender",
+    name: "Addenda",
+    value: addendaStr,
+    required: true,
+  };
+
+  const signingOptions: HelloSignSDK.SubSigningOptions = {
+    draw: true,
+    type: true,
+    upload: true,
+    phone: false,
+    defaultType: HelloSignSDK.SubSigningOptions.DefaultTypeEnum.Draw,
+  };
+
+  const data: HelloSignSDK.SignatureRequestSendWithTemplateRequest = {
+    templateIds: [HelloSignTemplates.AddendumToPurchaseContract],
+    // subject: "Purchase Order",
+    // message: "Glad we could come to an agreement.",
+    signers: signers,
+    customFields: [
+      customFieldContractDate,
+      customFieldPropertyAddress,
+      customFieldAddenda,
+    ],
+    signingOptions,
+    testMode: true,
+  };
+
+  try {
+    const result = await api.signatureRequestSendWithTemplate(data);
+    console.log(result);
+  } catch (error: any) {
+    console.log("Exception when calling HelloSign API:");
+    console.log(error.body);
+  }
+};
 
 export const sendPurchaseContract = async (data: any) => {
   const initialKeys = Object.keys(data);
@@ -470,88 +509,49 @@ export const sendPurchaseContract = async (data: any) => {
   }
 };
 
-export const sendPurchaseContractAddendumRequest = async (
-  addenda: string[],
-  address: Address,
-  buyers: Signer[],
-  contractDate: string,
-  sellers: Signer[]
-) => {
-  const signers: HelloSignSDK.SubSignatureRequestTemplateSigner[] = [];
+function parseDate(dateStr: string) {
+  const components = dateStr.split("-");
 
-  for (let b = 0; b < buyers.length; b++) {
-    const buyer = buyers[b];
-    signers.push({
-      role: `Buyer${b + 1}`,
-      emailAddress: buyer.email,
-      name: `${buyer.firstName} ${buyer.lastName}`,
-    });
+  let returnDay,
+    returnMonth,
+    returnYear = "";
+
+  if (components.length === 3) {
+    returnYear = components[0].slice(-2);
+    returnDay = `${parseInt(components[2])}`;
+
+    const month = parseInt(components[1]);
+
+    if (month === 1) {
+      returnMonth = "January";
+    } else if (month === 2) {
+      returnMonth = "February";
+    } else if (month === 3) {
+      returnMonth = "March";
+    } else if (month === 4) {
+      returnMonth = "April";
+    } else if (month === 5) {
+      returnMonth = "May";
+    } else if (month === 6) {
+      returnMonth = "June";
+    } else if (month === 7) {
+      returnMonth = "July";
+    } else if (month === 8) {
+      returnMonth = "August";
+    } else if (month === 9) {
+      returnMonth = "September";
+    } else if (month === 10) {
+      returnMonth = "October";
+    } else if (month === 11) {
+      returnMonth = "November";
+    } else if (month === 12) {
+      returnMonth = "December";
+    }
   }
 
-  for (let s = 0; s < sellers.length; s++) {
-    const seller = sellers[s];
-    signers.push({
-      role: `Seller${s + 1}`,
-      emailAddress: seller.email,
-      name: `${seller.firstName} ${seller.lastName}`,
-    });
+  if (returnDay === "") {
+    return { monthDay: "", year2digit: "" };
+  } else {
+    return { monthDay: `${returnMonth} ${returnDay}`, year2digit: returnYear };
   }
-
-  const customFieldContractDate: HelloSignSDK.SubCustomField = {
-    editor: "Sender",
-    name: "ContractDate",
-    value: contractDate,
-    required: true,
-  };
-
-  const customFieldPropertyAddress: HelloSignSDK.SubCustomField = {
-    editor: "Sender",
-    name: "PropertyAddress",
-    value: `${address.streetAddress}${
-      address.address2 ? " " + address.address2 : ""
-    }, ${address.city}, ${address.state} ${address.zipCode}`,
-    required: true,
-  };
-
-  let addendaStr = `\n1. ${addenda[0]}`;
-  for (let a = 1; a < addenda.length; a++) {
-    addendaStr = `${addendaStr}\n\n${a + 1}. ${addenda[a]}`;
-  }
-
-  const customFieldAddenda: HelloSignSDK.SubCustomField = {
-    editor: "Sender",
-    name: "Addenda",
-    value: addendaStr,
-    required: true,
-  };
-
-  const signingOptions: HelloSignSDK.SubSigningOptions = {
-    draw: true,
-    type: true,
-    upload: true,
-    phone: false,
-    defaultType: HelloSignSDK.SubSigningOptions.DefaultTypeEnum.Draw,
-  };
-
-  const data: HelloSignSDK.SignatureRequestSendWithTemplateRequest = {
-    templateIds: [HelloSignTemplates.AddendumToPurchaseContract],
-    // subject: "Purchase Order",
-    // message: "Glad we could come to an agreement.",
-    signers: signers,
-    customFields: [
-      customFieldContractDate,
-      customFieldPropertyAddress,
-      customFieldAddenda,
-    ],
-    signingOptions,
-    testMode: true,
-  };
-
-  try {
-    const result = await api.signatureRequestSendWithTemplate(data);
-    console.log(result);
-  } catch (error: any) {
-    console.log("Exception when calling HelloSign API:");
-    console.log(error.body);
-  }
-};
+}
