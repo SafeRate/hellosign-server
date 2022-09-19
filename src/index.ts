@@ -80,7 +80,6 @@ const helloSignTestPurchaseContract = async () => {
     buyerEmailAddress: "dylhallan@gmail.com",
     buyerFirstName: "Dylan",
     buyerLastName: "Hall",
-    buyerOfficePhone: undefined,
     buyerState: "IL",
     buyerZipCode: "60615",
     closingCostAmount: 1000,

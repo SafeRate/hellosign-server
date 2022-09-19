@@ -127,6 +127,14 @@ function parseDate(dateStr: string) {
 }
 
 export const sendPurchaseContract = async (data: any) => {
+  const initialKeys = Object.keys(data);
+  for (let ik = 0; ik < initialKeys.length; ik++) {
+    const initialKey = initialKeys[ik];
+    if (typeof data[initialKey] === "undefined" || data[initialKey] === null) {
+      delete data[initialKey];
+    }
+  }
+
   const signers: HelloSignSDK.SubSignatureRequestTemplateSigner[] = [];
 
   let namesToCheck = [
