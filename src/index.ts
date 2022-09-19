@@ -10,7 +10,7 @@ const hellosignTestLOX = async () => {
     {
       firstName: "Dylan",
       lastName: "Hall",
-      email: "dylhallan@gmail.com",
+      email: "dylan@saferate.com",
     },
     {
       streetAddress: "211 E Ohio St",
@@ -38,7 +38,7 @@ const helloSignTestPurchaseAddenda = async () => {
       {
         firstName: "Dylan",
         lastName: "Hall",
-        email: "dylhallan@gmail.com",
+        email: "dylan@saferate.com",
       },
     ],
     "2022-09-15",
@@ -46,7 +46,7 @@ const helloSignTestPurchaseAddenda = async () => {
       {
         firstName: "Neon",
         lastName: "Hall",
-        email: "dylhallan@gmail.com",
+        email: "dylan@saferate.com",
       },
     ]
   );
@@ -118,9 +118,9 @@ const helloSignTestPurchaseContract = async () => {
 };
 
 const hellosignTest = async () => {
-  // await hellosignTestLOX();
+  await hellosignTestLOX();
   // await helloSignTestPurchaseAddenda();
-  await helloSignTestPurchaseContract();
+  // await helloSignTestPurchaseContract();
 };
 
 hellosignTest();
