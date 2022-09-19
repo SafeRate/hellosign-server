@@ -64,8 +64,6 @@ export const sendLetterOfExplanationSignatureRequest = async (
 
   const data: HelloSignSDK.SignatureRequestSendWithTemplateRequest = {
     templateIds: [HelloSignTemplates.LetterOfExplanation],
-    // subject: "Purchase Order",
-    // message: "Glad we could come to an agreement.",
     signers: [mainSigner],
     customFields: [customField1, customField2],
     signingOptions,
@@ -131,41 +129,86 @@ function parseDate(dateStr: string) {
 export const sendPurchaseContract = async (data: any) => {
   const signers: HelloSignSDK.SubSignatureRequestTemplateSigner[] = [];
 
+  let namesToCheck = [
+    "buyer",
+    "seller",
+    "buyerAgent",
+    "sellerAgent",
+    "buyerAttorney",
+    "sellerAttorney",
+    "mortgageOriginator",
+  ];
+
+  for (let ntc = 0; ntc < namesToCheck.length; ntc++) {
+    const prefix = namesToCheck[ntc];
+    const firstNameField = `${prefix}FirstName`;
+    const lastNameField = `${prefix}LastName`;
+    const nameField = `${prefix}Name`;
+
+    let constructedName = "";
+    let sep = "";
+
+    if (
+      data.hasOwnProperty(firstNameField) ||
+      data.hasOwnProperty(lastNameField)
+    ) {
+      if (data.hasOwnProperty(firstNameField)) {
+        const firstNameValue = data[firstNameField];
+        if (
+          typeof firstNameValue === "string" &&
+          firstNameValue.trim().length > 0
+        ) {
+          const derivedFirstName = firstNameValue.trim();
+          constructedName = `${derivedFirstName}`;
+          sep = " ";
+        }
+
+        delete data[firstNameField];
+      }
+
+      if (data.hasOwnProperty(lastNameField)) {
+        const lastNameValue = data[lastNameField];
+        if (
+          typeof lastNameValue === "string" &&
+          lastNameValue.trim().length > 0
+        ) {
+          const derivedLastName = lastNameValue.trim();
+          constructedName = `${constructedName}${sep}${derivedLastName}`;
+          sep = " ";
+        }
+
+        delete data[lastNameField];
+      }
+    }
+
+    if (constructedName !== "") {
+      data[nameField] = constructedName;
+    }
+  }
+
   signers.push({
     role: "Buyer1",
     emailAddress: data.buyerEmailAddress,
-    name: `${data.buyerFirstName} ${data.buyerLastNme}`,
+    name: data.buyerName,
   });
-
-  delete data.buyerFirstName, data.buyerLastName, data.buyerEmailAddress;
 
   signers.push({
     role: "Seller1",
     emailAddress: data.sellerEmailAddress,
-    name: `${data.sellerFirstName} ${data.sellerLastNme}`,
+    name: data.sellerName,
   });
-
-  delete data.sellerFirstName, data.sellerLastName, data.sellerEmailAddress;
 
   signers.push({
     role: "BuyerAgent",
     emailAddress: data.buyerAgentEmailAddress,
-    name: `${data.buyerAgentFirstName} ${data.buyerAgentLastNme}`,
+    name: data.buyerAgentName,
   });
-
-  delete data.buyerAgentFirstName,
-    data.buyerAgentLastName,
-    data.buyerAgntEmailAddress;
 
   signers.push({
     role: "SellerAgent",
     emailAddress: data.sellerAgentEmailAddress,
-    name: `${data.sellerAgentFirstName} ${data.sellerAgentLastNme}`,
+    name: data.sellerAgentName,
   });
-
-  delete data.sellerAgentFirstName,
-    data.sellerAgentLastName,
-    data.sellerAgntEmailAddress;
 
   if (data.notAcceptedDate) {
     const dateVals = parseDate(data.notAcceptedDate);
@@ -174,11 +217,11 @@ export const sendPurchaseContract = async (data: any) => {
     delete data.notAcceptedDate;
   }
 
-  if (data.mortageCommitmentDate) {
-    const dateVals = parseDate(data.mortageCommitmentDate);
+  if (data.mortgageCommitmentDate) {
+    const dateVals = parseDate(data.mortgageCommitmentDate);
     data.mortgageContingencyDayMonth = dateVals.monthDay;
     data.mortgageContingencyYear = dateVals.year2digit;
-    delete data.mortageCommitmentDate;
+    delete data.mortgageCommitmentDate;
   }
 
   if (data.closingDate) {
@@ -220,9 +263,11 @@ export const sendPurchaseContract = async (data: any) => {
     if (data.finalEarnestMoneyType === "%") {
       data.finalEarnestMoneyIsPercent = true;
       data.finalEarnestMoneyIsAmount = false;
-      data.finalEarnestMoneyAmount = numeral(
+      data.finalEarnestMoneyPercent = numeral(
         data.finalEarnestMoneyAmount
       ).format("0,0.00");
+
+      delete data.finalEarnestMoneyAmount;
     } else {
       data.finalEarnestMoneyIsPercent = false;
       data.finalEarnestMoneyIsAmount = true;
@@ -281,8 +326,21 @@ export const sendPurchaseContract = async (data: any) => {
     );
   }
 
-  if (data.hasOwnProperty("realEstateTaxes")) {
-    data.realEstateTaxes = numeral(data.realEstateTaxes).format("$0,0.00");
+  if (data.hasOwnProperty("propertyTaxYear")) {
+    if (data.propertyTaxYear) {
+      if (
+        typeof data.propertyTaxYear === "string" &&
+        data.propertyTaxYear.length === 4
+      ) {
+        data.propertyTaxYear = data.propertyTaxYear.slice(-2);
+      } else {
+        delete data.propertyTaxYear;
+      }
+    }
+  }
+
+  if (data.hasOwnProperty("propertyTaxAmount")) {
+    data.propertyTaxAmount = numeral(data.propertyTaxAmount).format("$0,0.00");
   }
 
   if (data.hasOwnProperty("propertyTaxProrated")) {
@@ -293,6 +351,23 @@ export const sendPurchaseContract = async (data: any) => {
 
   if (data.hasOwnProperty("hoaAssessment")) {
     data.hoaAssessment = numeral(data.hoaAssessment).format("$0,0.00");
+  }
+
+  if (!data.hasOwnProperty("specialAssessmentYes")) {
+    data.specialAssessmentNo = true;
+    data.specialAssessmentYes = false;
+  } else {
+    data.specialAssessmentNo = !data.specialAssessmentYes;
+  }
+
+  if (data.specialAssessmentYes) {
+    if (data.outstandingAssessmentDue) {
+      data.outstandingAssessmentNotDue = false;
+    } else {
+      data.outstandingAssessmentNotDue = true;
+    }
+  } else {
+    data.outstandingAssessmentNotDue = true;
   }
 
   if (data.hasOwnProperty("specialAssessment")) {
@@ -333,22 +408,24 @@ export const sendPurchaseContract = async (data: any) => {
     data.disclosureMoldNo = !data.disclosureMoldYes;
   }
 
+  console.log(JSON.stringify(data));
+
   const dataKeys = Object.keys(data);
-  const customFields = [];
+  const customFields: HelloSignSDK.SubCustomField[] = [];
   for (let dk = 0; dk < dataKeys.length; dk++) {
     const dataKey = dataKeys[dk];
 
     let editor = "BuyerAgent";
 
-    if (dataKey.startsWith("buyerAgent")) {
-      editor = "BuyerAgent";
-    } else if (dataKey.startsWith("buyer")) {
-      editor = "Buyer1";
-    } else if (dataKey.startsWith("sellerAgent")) {
-      editor = "SellerAgent";
-    } else if (dataKey.startsWith("seller")) {
-      editor = "Seller1";
-    }
+    // if (dataKey.startsWith("buyerAgent")) {
+    //   editor = "BuyerAgent";
+    // } else if (dataKey.startsWith("buyer")) {
+    //   editor = "Buyer1";
+    // } else if (dataKey.startsWith("sellerAgent")) {
+    //   editor = "SellerAgent";
+    // } else if (dataKey.startsWith("seller")) {
+    //   editor = "Seller1";
+    // }
 
     customFields.push({
       editor,
@@ -377,7 +454,7 @@ export const sendPurchaseContract = async (data: any) => {
   };
 
   try {
-    const result = await api.signatureRequestSendWithTemplate(data);
+    const result = await api.signatureRequestSendWithTemplate(helloSignData);
     console.log(result);
   } catch (error: any) {
     console.log("Exception when calling HelloSign API:");
