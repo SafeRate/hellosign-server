@@ -124,8 +124,6 @@ const helloSignTestPurchaseContract = async () => {
     mortgageLenderOfficePhone: "312-248-0234",
     mortgageLenderState: "IL",
     mortgageLenderZipCode: "60654",
-    mortgageOriginatorFirstName: undefined,
-    mortgageOriginatorLastName: undefined,
     mortgageYear: 30,
     notAcceptedDate: "2022-10-07",
     offerDate: "2022-09-19",
