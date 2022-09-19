@@ -12,7 +12,9 @@
     "typescript": "^4.7.2"
   },
   "dependencies": {
+    "@types/numeral": "^2.0.2",
     "dotenv": "^16.0.2",
-    "hellosign-sdk": "github:HelloFax/hellosign-nodejs-sdk#openapi"
+    "hellosign-sdk": "github:HelloFax/hellosign-nodejs-sdk#openapi",
+    "numeral": "^2.0.6"
   }
 }
